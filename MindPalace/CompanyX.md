@@ -187,18 +187,6 @@ Manually installing monitoring agents on dozens of servers is error‑prone and 
 3. **Configuration management** – Tools like Anible, Puppet, or Chef that enforce desired state.
 4. **Orchestration** – Run playbooks against entire inventories (e.g., Ansible’s `dotnet_msi` role).
 
-**Example Ansible snippet:**
-```yaml
-- hosts: windows_servers
-  tasks:
-    - include_role:
-        name: appdynamics.agents.dotnet_msi
-      vars:
-        agent_version: "23.8.0"
-        controller_host: "mycontroller.company.com"
-        application_name: "MyApp"
-        tier_name: "WebTier"
-```
 
 From Manual to Code
 
@@ -220,12 +208,12 @@ Root cause: A frequently executed query missing an index. Under load, the databa
 Fix: Add appropriate index; response time dropped dramatically.
 Lesson: Regularly review slow query logs, especially before peak traffic events.
 
-Load Balancer Overload
+Load Balancer Overload (Uneven Traffic Distribution)
 
-Symptom: Users experiencing intermittent failures; load balancer CPU at 95%.
-Root cause: SSL termination and too many concurrent connections overwhelmed the appliance. The load balancer was also performing DPI (deep packet inspection) due to a misconfigured WAF rule.
-Fix: Offload SSL to dedicated servers, tune connection limits, and review WAF rules.
-Lesson: Load balancers are not infinitely scalable; monitor their resource usage and understand their features.
+Symptom: Users experiencing intermittent failures and slow response times on some requests, while other requests were fast. Load balancer CPU was moderately high (~70–80%), but backend server CPU usage was extremely uneven: some servers constantly pegged at 95–100% while others sat at 10–30%.
+Root cause: The load balancer was configured with Round Robin algorithm. However, the backend fleet had recently been partially refreshed with newer-generation servers that had significantly higher single-thread performance and better per-core throughput. Round Robin distributes requests equally by connection count / request count, ignoring actual server capacity and current load. As a result, the newer (faster) servers finished their requests more quickly and became available again sooner, causing the load balancer to send them disproportionately more traffic in practice. This created a positive feedback loop: faster servers → handle more requests → appear “less busy” in RR logic → receive even more requests → become overloaded, while older servers remained underutilized.
+Fix: Changed the load balancing algorithm from Round Robin to Least Connections. This allowed the load balancer to send new requests to the servers that currently had the fewest active connections, naturally balancing load according to each server’s actual processing capacity rather than treating all backends as identical. After the change, server CPU utilization equalized across the fleet (typically 45–65% across all nodes), intermittent failures disappeared, and overall throughput increased.
+Lesson: Round Robin assumes all backend servers are homogeneous in performance. When server generations are mixed (different CPU models, clock speeds, core counts, etc.), Round Robin frequently leads to severely skewed load distribution. Prefer Least Connections (or Weighted Least Connections when appropriate) in heterogeneous environments, and always monitor both load balancer metrics and per-server resource usage to detect this pattern early
 
 The Domino Effect
 
