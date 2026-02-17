@@ -293,21 +293,6 @@ Key Skills to Develop
 · Observability: Metrics, logs, traces; how to correlate them.
 · Automation: Ansible, Terraform, CI/CD pipelines.
 
-Build Your Knowledge Base
-
-Create your own Git repository with:
-
-· Architecture diagrams.
-· Notes from incidents (sanitized).
-· Automation scripts.
-· Study resources.
-
-Suggested repository names:
-
-· infrastructure-field-guide
-· observability-playbook
-· devops-war-room-lessons
-
 ---
 
 Appendix: Glossary of Terms
@@ -324,6 +309,5 @@ Smoke Test A basic test to verify that an application starts and critical functi
 WAF Web Application Firewall – protects web applications from attacks like SQL injection.
 War Room A cross‑functional team assembled to resolve a critical incident under time pressure.
 
----
 
-This document is a living resource. As you encounter new incidents and technologies, add to it. The goal is not just to remember what happened, but to build a mental model that helps you anticipate and prevent future failures.
+
